@@ -11,7 +11,7 @@
     "polymer",
     "web-components"
   ],
-  "main": "everlive-bridge.html",
+  "main": "telerik-platform-bridge.html",
   "license": "MIT",
   "homepage": "http://www.fancy-cart.com",
   "ignore": [
