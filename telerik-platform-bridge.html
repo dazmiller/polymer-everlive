@@ -7,17 +7,17 @@
     Code distributed by Google as part of the polymer project is also
     subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
 -->
-<link rel="import" href="../polymer/polymer.html">
-<script src='http://ajax.aspnetcdn.com/ajax/mobileservices/MobileServices.Web-1.1.2.min.js'></script>
+<link rel="import" href="bower_components/polymer/polymer.html">
+<script src='<script src="js/everlive.all.js"></script>'></script>
 <!--
-Element providing an interface to Azure Modile Services.
+Element providing an interface to Telerik Platform Services.
 
 ##### Example
 
-    <azure-mobile-services-bridge appurl="https://api.azure-mobile.net/"
+    <telerik-platform-bridge appurl="https://api.azure-mobile.net/"
                            appkey="DNBjEutqGOCjnLfAdWhwWmAMBDxEbd50"
                            table="TestTable"
-                           auto></azure-mobile-services-bridge>
+                           auto></telerik-platform-bridge>
 
 With `auto` set to `true`, the element performs a request on creation.
 
@@ -26,29 +26,30 @@ Note: The `params` attribute must be a javascript object.
 You can trigger a request explicitly by calling `go` on the
 element.
 
-@element azure-mobile-services-bridge
-@blurb Element providing an interface to Azure Modile Services
+@element telerik-platform-bridge
+@blurb Element providing an interface to Telerik Platform Services
 @status alpha
-@homepage http://github.com/vipervf1/azure-mobile-services-bridge
+@homepage https://github.com/dazmiller/polymer-everlive
 -->
-<polymer-element name="azure-mobile-services-bridge" hidden attributes="appurl appkey table auto method params">
+<polymer-element name=""
+<polymer-element name="telerik-platform-bridge" hidden attributes="appurl appkey table auto method params">
     <script>
 
-        Polymer('azure-mobile-services-bridge', {
+        Polymer('telerik-platform-bridge', {
             /**
              * Fired when a response is received.
-             * 
+             *
              * @event core-response
              */
 
             /**
              * Fired when an error is received.
-             * 
+             *
              * @event core-error
              */
 
             /**
-             * The `appurl` attribute sets the url of the mobile service
+             * The `appurl` attribute sets the url of the platform service
              *
              * @attribute appurl
              * @type string
@@ -60,6 +61,15 @@ element.
              * The `appkey` attribute sets the applicatio key of the mobile service
              *
              * @attribute appkey
+             * @type strng
+             * @default ''
+             */
+            appUser: '',
+
+            /**
+             * The `appUser` attribute sets the appUser key of the mobile service
+             *
+             * @attribute appUser
              * @type strng
              * @default ''
              */
@@ -75,13 +85,21 @@ element.
             table: '',
 
             /**
-            * Returns the response object.
-            *
-            * @attribute response
-            * @type Object
-            * @default null
-            */
+             * Returns the response object.
+             *
+             * @attribute response
+             * @type Object
+             * @default null
+             */
             response: null,
+            /**
+             * Returns the token object.
+             *
+             * @attribute response
+             * @type Object
+             * @default null
+             */
+            token: null,
 
             /**
              * If true, automatically performs a request.
@@ -104,19 +122,54 @@ element.
 
             /**
              * Parameters to send to the specified method
-             *  
+             *
              * @attribute params
              * @type object
              * @default null
              */
             params: null,
 
+            /**
+             * Everlive object
+             *
+             * @attribute Everlive
+             * @type object
+             * @default null
+             */
+
+
+            Everlive: null,
+
+            /**
+             * password object
+             *
+             * @attribute password
+             * @type string
+             * @default null
+             */
+
+
+            password: '',
+
             ready: function () {
                 // Ready is a lifecycle callback.
                 // You can do setup work in here.
                 // More info: http://www.polymer-project.org/docs/polymer/polymer.html#lifecyclemethods
-                var MobileServiceClient = WindowsAzure.MobileServiceClient
-                this.client = new MobileServiceClient(this.appurl, this.appkey);
+
+                if (this.Everlive === null || isNull(this.Everlive)) {
+                    this.Everlive = new Everlive(this.appkey);
+                }
+
+                 // login to Telerik Platform Services
+                this.Everlive.$.Users.login(this.appUser, this.password) // password
+                        .then(function (data) { // success callback, this returns the token that we can store to avoid re-authenticating this user!
+                            this.token = (JSON.stringify(data));
+                        },
+                        function (error) { // error callback
+                            alert(JSON.stringify(error));
+                        });
+
+
                 this.clientTable = this.client.getTable(this.table);
                 if (this.auto) {
                     this.go();
@@ -147,11 +200,17 @@ element.
 
             goRead: function () {
                 var that = this;
-                this.clientTable.read().done(function (results) {
-                    that.proccessResponse(results, that);
-                }, function (err) {
-                    that.proccessError(err, that);
-                });
+                var data = that.Everlive.$.data(that.table);
+                data.get()
+                        .then(function (data) {
+                            //alert(JSON.stringify(data));
+                            that.proccessResponse(data, that);
+                        },
+                        function (error) {
+                           // alert(JSON.stringify(error));
+                            that.proccessError(error, that);
+                        });
+
             },
 
             goInsert: function () {
@@ -187,12 +246,12 @@ element.
 
             proccessResponse: function (response, that) {
                 that.response = response;
-                that.fire('core-response', { response: that.response });
+                that.fire('core-response', {response: that.response});
             },
 
             proccessError: function (error, that) {
                 console.error(error);
-                that.fire('core-error', { error: error });
+                that.fire('core-error', {error: error});
             }
 
         });
